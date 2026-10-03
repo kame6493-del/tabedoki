@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist-e2e/
+releases/
+scripts/e2e_out/
+store/raw/_*
+android/local.properties
+*.jks
+*.keystore
+*.dpapi

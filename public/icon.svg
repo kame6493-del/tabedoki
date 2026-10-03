@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#2f7d55"/>
+  <!-- 冷蔵庫の扉 -->
+  <rect x="282" y="176" width="460" height="690" rx="72" fill="#f6f2ea"/>
+  <line x1="282" y1="420" x2="742" y2="420" stroke="#2f7d55" stroke-width="22"/>
+  <rect x="346" y="250" width="26" height="110" rx="13" fill="#2f7d55"/>
+  <rect x="346" y="488" width="26" height="150" rx="13" fill="#2f7d55"/>
+  <!-- 食べ時の札(丸い時計) -->
+  <circle cx="560" cy="610" r="128" fill="#e8712a"/>
+  <circle cx="560" cy="610" r="96" fill="#fde9d8"/>
+  <path d="M560 548 V612 L606 640" fill="none" stroke="#c8463d" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- 葉 -->
+  <path d="M600 300 C640 230 720 226 730 228 C732 238 720 318 650 344 C624 354 604 340 600 300 Z" fill="#7cc48f"/>
+</svg>
