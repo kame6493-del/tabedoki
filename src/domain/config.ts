@@ -3,7 +3,7 @@
  * RevenueCat の公開APIキーはまだ無いので空。空のあいだ購入ボタンは「購入は準備中です」になり、課金は走らない。
  */
 export const BILLING = {
-  revenuecat: { ios: 'appl_KMMXwCWIuiyKzMlkYkwBrqvlyvS', android: '' },
+  revenuecat: { ios: 'appl_KMMXwCWIuiyKzMlkYkwBrqvlyvS', android: 'goog_uxIXkYLJCcNzwrszatYxbeEKHpF' },
   /** RevenueCat の entitlement 名 */
   entitlement: 'full',
   /** App Store / Google Play の商品ID(非消耗型・買い切り) */
