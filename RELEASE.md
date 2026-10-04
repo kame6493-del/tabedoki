@@ -92,3 +92,11 @@
 3. RevenueCat にアプリを足し、entitlement "full"・Offering を作って、公開APIキーを src/domain/config.ts の BILLING.revenuecat に入れ、ビルドし直す(キーを入れる前の AAB は購入が「準備中」のまま)
 4. iOS: 非公開リポジトリに置いて workflow を compile_only で1回 → App Store Connect でアプリと App内課金を作って TestFlight
 5. APK を実機に入れて、通知の許可・時刻どおりの通知・共有シート(LINE で JSON を送る/受け取る)・購入の流れを確かめる(ブラウザの E2E では通知とネイティブの共有は動かせない)
+
+## Google Play(2026-10-04)
+- Play Console にアプリを作成: app id 4976219282818450257、名前「タベドキ 賞味期限と冷蔵庫の管理」、jp.tabedoki.app、日本語・アプリ・無料
+- プライバシーポリシー: https://kame6493-del.github.io/apps/tabedoki/privacy.html
+- クローズドテスト Alpha(トラック 4698231948735856697): 日本・テスター AndroidClosedJP と nigatecho-testers・フィードバック kame6493@gmail.com
+- 2026-10-04 審査に送信(14件)。申告: 広告なし/ログイン不要/18歳以上/レーティング3歳以上/データセーフティ=購入履歴のみ/広告ID なし/行政 いいえ/金融なし/健康なし。ストア設定 フード、ドリンク
+- 画面写真の並びは自動(play_shot の順に並んでいない可能性)。公開前に確認
+- 1.0.1 (vc2): RevenueCat Android キー入り。AAB: C:\Users\yuichi1\Downloads\タベドキ_2026-10-03\app\releases\tabedoki-1.0.1-vc2-release.aab (6.09 MB, 6,386,165 バイト)
