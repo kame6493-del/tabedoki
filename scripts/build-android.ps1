@@ -49,11 +49,11 @@ try {
   if ($p.ExitCode -ne 0) { Get-Content $err -Tail 30; throw "Gradle が失敗しました (exit $($p.ExitCode))" }
   $out = Join-Path $repo 'releases'
   New-Item -ItemType Directory -Force $out | Out-Null
-  Copy-Item "$proj\app\build\outputs\bundle\release\app-release.aab" "$out\tabedoki-release.aab" -Force
-  Copy-Item "$proj\app\build\outputs\apk\release\app-release.apk" "$out\tabedoki-release.apk" -Force
+  Copy-Item "$proj\app\build\outputs\bundle\release\app-release.aab" "$out\tabedoki-1.0.1-vc2-release.aab" -Force
+  Copy-Item "$proj\app\build\outputs\apk\release\app-release.apk" "$out\tabedoki-1.0.1-vc2-release.apk" -Force
   # 署名の確認(bundletool は無いので jarsigner)
   $ErrorActionPreference = 'Continue'
-  $v = & "$env:JAVA_HOME\bin\jarsigner.exe" '-J-Duser.language=en' -verify "$out\tabedoki-release.aab" 2>&1 | Out-String
+  $v = & "$env:JAVA_HOME\bin\jarsigner.exe" '-J-Duser.language=en' -verify "$out\tabedoki-1.0.1-vc2-release.aab" 2>&1 | Out-String
   $ErrorActionPreference = 'Stop'
   if ($v -notmatch 'jar verified') { throw "AAB の署名を確かめられませんでした: $($v.Substring(0, [Math]::Min(400, $v.Length)))" }
   Write-Output "署名OK(jar verified)。出力: $out"
