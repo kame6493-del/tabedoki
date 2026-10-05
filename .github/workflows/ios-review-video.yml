@@ -1,0 +1,75 @@
+# App Review(Guideline 2.1 Information Needed)に出す画面録画を、GitHub のクラウド Mac の iPhone シミュレーター(最新 iOS)で撮る。
+# 持ち主は iPhone を持っていないので実機では撮れない。録画用ビルド(VITE_REVIEW_TOUR=1)は起動すると src/dev/reviewTour.ts が
+# 「ワンタップ登録 → 日付を直す → まとめて入れる → 捨てた → 記録 → 買い物メモ → 設定 → 完全版の購入画面」を自動で操作する。製品版には入らない。
+name: iOS review video
+
+on:
+  workflow_dispatch:
+
+jobs:
+  record:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Build web assets (review tour) and sync iOS
+        run: |
+          npm ci --no-audit --no-fund
+          VITE_REVIEW_TOUR=1 npm run build
+          npx cap sync ios
+
+      - name: Build for the simulator
+        run: |
+          xcodebuild build \
+            -project ios/App/App.xcodeproj \
+            -scheme App -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/dd" CODE_SIGNING_ALLOWED=NO -quiet
+
+      - name: Record on the newest iPhone simulator
+        run: |
+          set -x
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json,sys,re
+          d=json.load(sys.stdin)["devices"]
+          rts=sorted([k for k in d if "iOS" in k], key=lambda k:[int(x) for x in re.findall(r"\d+",k.split("iOS")[-1])])
+          devs=[x for x in d[rts[-1]] if x["name"].startswith("iPhone")]
+          pro=[x for x in devs if "Pro" in x["name"] and "Max" not in x["name"]]
+          print((pro or devs)[-1]["udid"])')
+          xcrun simctl list devices | grep "$UDID"
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3 || true
+          APP=$(ls -d "$RUNNER_TEMP"/dd/Build/Products/Debug-iphonesimulator/*.app | head -1)
+          BID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")
+          xcrun simctl install "$UDID" "$APP"
+          # 1品目を入れると通知の許可を聞く。シミュレーターでは誰も押せず、確認の窓が録画の間ずっと残るので、先に許可しておく
+          # (simctl privacy は通知を扱えないので applesimutils を使う。失敗しても録画は続ける)
+          (brew tap wix/brew && brew install applesimutils && applesimutils --byId "$UDID" --bundle "$BID" --setPermissions notifications=YES) || echo "::warning::notification permission was not pre-granted"
+          sleep 5
+          xcrun simctl io "$UDID" recordVideo --codec=h264 --force "$RUNNER_TEMP/review-tabedoki.mp4" &
+          REC=$!
+          sleep 3
+          xcrun simctl launch "$UDID" "$BID"
+          sleep 110
+          kill -INT $REC
+          wait $REC || true
+          xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/last-tabedoki.png"
+          sw_vers; xcrun simctl list runtimes | tail -3
+          ls -la "$RUNNER_TEMP"/review-*.mp4
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: review-video-tabedoki
+          path: |
+            ${{ runner.temp }}/review-tabedoki.mp4
+            ${{ runner.temp }}/last-tabedoki.png

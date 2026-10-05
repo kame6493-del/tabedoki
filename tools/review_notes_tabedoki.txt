@@ -1,0 +1,29 @@
+1. Screen recording: attached to our reply in App Store Connect. It starts from app launch and shows one-tap registration of a food item, changing its date, adding several items at once, marking an item as thrown away, the waste record, the shopping list, the settings screen and the In-App Purchase screen.
+We are a solo developer and do not own a physical iOS device, so the recording was made on the iOS Simulator (newest iPhone model, latest iOS available in Xcode) with the same build configuration. The red circles in the video mark each tap. The app has no account and no server, and uses no camera or location, so the behavior is the same on a physical device. The notification permission was granted in the simulator before recording; on a device, iOS asks for it when the first item is added. Sandbox purchases can be tested with the In-App Purchase submitted together with this version. The simulator uses the U.S. storefront, so the price shown may be in USD; the price in Japan is JPY 500.
+
+2. Purpose and audience
+Tabedoki is a fridge and expiry-date manager for households in Japan. Users record the food they buy, see items sorted by how soon they expire, get a reminder before the date, and record what they used up or threw away so they can see how much money was wasted. The main goal is fast entry: common foods are added with one tap and a default estimated date, and the date printed on the package can be entered in two taps (month, then day).
+
+3. How to use (no login or account is needed)
+- Launch the app. The home screen shows the items in the fridge sorted by expiry and a row of common foods ("ワンタップで入れる").
+- Tap a food to add it with an estimated date. Tap "日付を直す" on the message to change the date (tomorrow, 1 week, or month and day).
+- Tap the + button to add several items at once ("まとめて入れる"), or "前回と同じ" to repeat the last shopping.
+- Tap an item to mark it as used up ("使い切った") or thrown away ("捨てた"). Thrown-away items can be sent to the shopping list.
+- Tabs at the bottom: 冷蔵庫 (fridge), 買い物 (shopping list), 記録 (monthly waste amount and most-wasted foods), 設定 (settings: reminders, prices, family sharing file, backup, Full Version, restore purchase).
+The free version can be used without time limit; up to 30 items can be stored at the same time. All data stays on the device and the app works offline.
+
+4. External services
+- Apple In-App Purchase, managed through RevenueCat (purchase validation and restore). RevenueCat receives only an anonymous app user ID and the App Store transaction.
+- Reminders are local notifications scheduled on the device.
+- Family sharing, backup and CSV export create a file that the user sends with the iOS share sheet to a destination they choose. The app does not send anything automatically.
+- No other servers, no login service, no analytics, no ads. The developer has no server.
+
+5. Regional differences
+The app is in Japanese and intended for users in Japan. There are no regional differences in its features.
+
+6. Third-party material
+No third-party content or data is used. The estimated storage days for 61 foods are our own estimates, and the app states in the app and in the description that the date printed on the package takes priority. The only quoted public information is the recommended fridge and freezer temperature from Japan's Ministry of Health, Labour and Welfare ("家庭でできる食中毒予防の6つのポイント", https://www.mhlw.go.jp/www1/houdou/0903/h0331-1.html), shown with its source in the app. All icons, texts and images are our own.
+
+7. In-App Purchase
+One non-consumable product, "完全版" (Full Version, product ID tabedoki_full), JPY 500, one-time purchase (no subscription). It unlocks unlimited items (free version: 30 at a time), reminder days from the same day up to one week before at any time, adding categories and storage places, 4 themes, and CSV export.
+How to reach it: 設定 (Settings) tab > tap the "完全版 ¥500(買い切り)" card at the top. It also opens when tapping a feature marked 完全版 in Settings, or "完全版を見る" when the 30-item limit is reached. The purchase screen shows the comparison table and the buy button. "購入の復元" (restore) is on the purchase screen.
