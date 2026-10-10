@@ -3,7 +3,9 @@
 - store/play/feature_1024x500.png  … フィーチャー グラフィック(見本の野菜の絵・題字・アイコン)
 - store/play/play_shot_1〜6.png    … 1080x1920。見本データで撮った画面(store/raw/play_*.png)に見出しを付ける
 値段・「無料」は写さない(完全版の画面・設定の完全版の帯は撮らない)。Android に無い機能(iPhone だけの物)も写さない。
-1.0 の素材は store/_old_2026-10-10/ に退避してある。iOS は出し直さないので App Store 用の shot_*.png は作らない。
+1.0 の素材は store/_old_2026-10-10/ に退避してある。
+2026-10-10 持ち主「Claude 特有の背景をなくして」: 淡い緑の無地をやめ、アプリの濃い緑の地に、野菜の写真(store/raw/veggies.png)を
+ぼかして上に敷く。見出しは白の HG創英角ゴシックUB。前の版は store/_cream_backup_2026-10-10/ に退避。iOS は出し直さないので App Store 用の shot_*.png は作らない。
 """
 import os
 import socket
@@ -21,11 +23,15 @@ IMG = os.path.join(ROOT, "public", "img")
 for d in (RAW, PLAY):
     os.makedirs(d, exist_ok=True)
 
-BG = (238, 247, 241)
+LEAF = (16, 104, 58)      # 地の濃い緑
+LEAF2 = (9, 72, 40)
+WHITE = (255, 255, 255)
+SUBG = (205, 240, 218)
 GREEN = (30, 148, 87)
 DEEP = (14, 120, 65)
 INK = (31, 42, 36)
-BOLD = "C:/Windows/Fonts/YuGothB.ttc"
+BOLD = "C:/Windows/Fonts/HGRSGU.TTC"
+SUBF = "C:/Windows/Fonts/meiryob.ttc"
 W, H = 1080, 1920
 
 
@@ -83,17 +89,40 @@ def centered(d, y, text, font, fill, w=W):
     d.text(((w - (bb[2] - bb[0])) // 2 - bb[0], y), text, font=font, fill=fill)
 
 
-def compose(n, raw, title, sub):
-    img = Image.new("RGB", (W, H), BG)
+def leaf_bg(w, h, band):
+    """濃い緑の縦グラデーションに、野菜の写真をぼかして上 band px に敷く(下へ溶かす)"""
+    img = Image.new("RGB", (w, h), LEAF)
     d = ImageDraw.Draw(img)
-    # 上の見出し(見本と同じ緑の太字)
+    for yy in range(h):
+        t = yy / h
+        d.line([(0, yy), (w, yy)], fill=tuple(round(LEAF[i] + (LEAF2[i] - LEAF[i]) * t) for i in range(3)))
+    if band <= 0:
+        return img
+    veg = Image.open(os.path.join(RAW, "veggies.png")).convert("RGB")
+    s = max(w / veg.width, band / veg.height)
+    veg = veg.resize((round(veg.width * s) + 1, round(veg.height * s) + 1), Image.LANCZOS)
+    veg = veg.crop(((veg.width - w) // 2, 0, (veg.width - w) // 2 + w, band)).filter(ImageFilter.GaussianBlur(w / 90))
+    veg = Image.blend(veg, Image.new("RGB", veg.size, LEAF2), 0.55)
+    m = Image.new("L", veg.size, 255)
+    mp = ImageDraw.Draw(m)
+    for yy in range(band):
+        t = yy / band
+        mp.line([(0, yy), (w, yy)], fill=round(255 * min(1.0, (1 - t) / 0.45)))
+    img.paste(veg, (0, 0), m)
+    return img
+
+
+def compose(n, raw, title, sub):
+    img = leaf_bg(W, H, 560)
+    d = ImageDraw.Draw(img)
+    # 上の見出し(白の HG創英角ゴシックUB)
     f1 = ImageFont.truetype(BOLD, 86)
-    f2 = ImageFont.truetype(BOLD, 38)
+    f2 = ImageFont.truetype(SUBF, 36)
     y = 92
     for ln in title.split("\n"):
-        centered(d, y, ln, f1, DEEP)
+        centered(d, y, ln, f1, WHITE)
         y += 112
-    centered(d, y + 14, sub, f2, (86, 97, 91))
+    centered(d, y + 14, sub, f2, SUBG)
     top = y + 100
     shot = Image.open(raw).convert("RGB")
     sw = 820
@@ -104,7 +133,7 @@ def compose(n, raw, title, sub):
     sh = shot.height
     x = (W - sw) // 2
     shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    ImageDraw.Draw(shadow).rounded_rectangle([x - 8, top + 18, x + sw + 8, top + sh + 40], radius=70, fill=(20, 60, 40, 80))
+    ImageDraw.Draw(shadow).rounded_rectangle([x - 8, top + 18, x + sw + 8, top + sh + 40], radius=70, fill=(0, 20, 8, 120))
     shadow = shadow.filter(ImageFilter.GaussianBlur(24))
     img.paste(shadow, (0, 0), shadow)
     fr = Image.new("L", (W, H), 0)
@@ -118,21 +147,22 @@ def compose(n, raw, title, sub):
 
 def feature():
     fw, fh = 1024, 500
-    fg = Image.new("RGB", (fw, fh), (246, 251, 247))
+    fg = leaf_bg(fw, fh, 0)
     d = ImageDraw.Draw(fg)
-    veg = Image.open(os.path.join(RAW, "veggies.png")).convert("RGBA")
-    s = 430 / veg.height
-    veg = veg.resize((round(veg.width * s), 430), Image.LANCZOS)
-    # 切り出した絵の左と下の縁をぼかして地になじませる
-    from PIL import ImageChops
-    g = Image.new("L", veg.size, 255)
-    gp = g.load()
-    for yy in range(veg.height):
-        for xx in range(veg.width):
-            a = min(1.0, xx / 140) * min(1.0, (veg.height - 1 - yy) / 110)
-            gp[xx, yy] = round(255 * a)
-    veg.putalpha(ImageChops.multiply(veg.getchannel("A"), g))
-    fg.paste(veg, (fw - veg.width, 0), veg)
+    # 野菜の写真は右に角丸の写真として置く(縁を溶かすと白い縁が浮くため)
+    veg = Image.open(os.path.join(RAW, "veggies.png")).convert("RGB")
+    cw, chh = 330, 420
+    s = max(cw / veg.width, chh / veg.height)
+    veg = veg.resize((round(veg.width * s) + 1, round(veg.height * s) + 1), Image.LANCZOS)
+    veg = veg.crop((veg.width - cw, veg.height - chh, veg.width, veg.height))
+    vx, vy = fw - cw - 40, 40
+    sh0 = Image.new("RGBA", (fw, fh), (0, 0, 0, 0))
+    ImageDraw.Draw(sh0).rounded_rectangle([vx, vy + 10, vx + cw, vy + chh + 10], radius=30, fill=(0, 20, 8, 130))
+    sh0 = sh0.filter(ImageFilter.GaussianBlur(14))
+    fg.paste(sh0, (0, 0), sh0)
+    vm = Image.new("L", (cw, chh), 0)
+    ImageDraw.Draw(vm).rounded_rectangle([0, 0, cw - 1, chh - 1], radius=30, fill=255)
+    fg.paste(veg, (vx, vy), vm)
     icon = Image.open(os.path.join(STORE, "icon_1024.png")).convert("RGB").resize((150, 150), Image.LANCZOS)
     m = Image.new("L", icon.size, 0)
     ImageDraw.Draw(m).rounded_rectangle([0, 0, 149, 149], radius=34, fill=255)
@@ -144,12 +174,14 @@ def feature():
     logo = Image.open(os.path.join(IMG, "logo.png")).convert("RGBA")
     lw = 360
     logo = logo.resize((lw, round(logo.height * lw / logo.width)), Image.LANCZOS)
-    fg.paste(logo, (238, 84), logo)
+    wl = Image.new("RGBA", logo.size, WHITE + (0,))
+    wl.putalpha(logo.getchannel("A"))
+    fg.paste(wl, (238, 84), wl)
     f1 = ImageFont.truetype(BOLD, 50)
-    f2 = ImageFont.truetype(BOLD, 26)
-    d.text((62, 262), "冷蔵庫の食べ時、", font=f1, fill=DEEP)
-    d.text((62, 330), "ワンタップで。", font=f1, fill=DEEP)
-    d.text((64, 418), "よく買う食材は1タップ登録・期限の近い順・ムダ金額", font=f2, fill=(86, 97, 91))
+    f2 = ImageFont.truetype(SUBF, 21)
+    d.text((62, 262), "冷蔵庫の食べ時、", font=f1, fill=WHITE)
+    d.text((62, 330), "ワンタップで。", font=f1, fill=WHITE)
+    d.text((64, 420), "よく買う食材は1タップ登録・期限の近い順・ムダ金額", font=f2, fill=SUBG)
     fg.save(os.path.join(PLAY, "feature_1024x500.png"))
 
 
