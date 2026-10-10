@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Ctx } from '../App';
 import type { Preset } from '../domain/types';
-import { CatDot, Sheet, TopBar, yen } from './parts';
+import { CatDot, FoodPic, Sheet, TopBar, yen } from './parts';
 
 const DAY_CHOICES = [1, 2, 3, 4, 5, 7, 10, 14, 21, 30, 60, 90, 180];
 
@@ -11,7 +11,7 @@ export function PresetsPage({ ctx, onClose }: { ctx: Ctx; onClose: () => void })
   const placeName = (id: string) => data.places.find((x) => x.id === id)?.name ?? '';
   return (
     <div className="page presets">
-      <TopBar title="食材の目安と値段" onClose={onClose} />
+      <TopBar title="食材の目安と値段" onBack={onClose} />
       <p className="muted small lead">押すと日数と値段を変えられます。日数は「買った日から何日くらいで食べ切るか」の目安で、タベドキ独自の値です。袋や箱に書かれた期限があれば、そちらが優先です。</p>
       {data.cats.map((c) => {
         const ps = data.presets.filter((p) => p.cat === c.id);
@@ -23,8 +23,11 @@ export function PresetsPage({ ctx, onClose }: { ctx: Ctx; onClose: () => void })
               {ps.map((p) => (
                 <li key={p.id}>
                   <button className={'pre-row' + (p.hidden ? ' hidden' : '')} onClick={() => setEdit(p)}>
-                    <span className="pre-name">{p.name}{p.hidden && <small>(隠している)</small>}</span>
-                    <span className="muted small">{placeName(p.place)}・{p.kind === 'shohi' ? '消費' : '賞味'}</span>
+                    <FoodPic name={p.name} cat={c} size={40} />
+                    <span className="pre-main">
+                      <span className="pre-name">{p.name}{p.hidden && <small>(隠している)</small>}</span>
+                      <span className="muted small">{placeName(p.place)}・{p.kind === 'shohi' ? '消費' : '賞味'}</span>
+                    </span>
                     <span className="pre-days">{p.days}日</span>
                     <span className="pre-yen muted">{p.price ? yen(p.price) : '—'}</span>
                   </button>

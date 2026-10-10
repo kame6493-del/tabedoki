@@ -2,10 +2,10 @@
   "appId": "jp.tabedoki.app",
   "appName": "タベドキ",
   "webDir": "dist",
-  "backgroundColor": "#f6f2ea",
+  "backgroundColor": "#fcfdfc",
   "android": { "allowMixedContent": false },
   "ios": { "contentInset": "never" },
   "plugins": {
-    "LocalNotifications": { "smallIcon": "ic_stat_tabedoki", "iconColor": "#2f7d55" }
+    "LocalNotifications": { "smallIcon": "ic_stat_tabedoki", "iconColor": "#1e9457" }
   }
 }

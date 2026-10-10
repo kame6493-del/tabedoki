@@ -100,3 +100,19 @@
 - 2026-10-04 審査に送信(14件)。申告: 広告なし/ログイン不要/18歳以上/レーティング3歳以上/データセーフティ=購入履歴のみ/広告ID なし/行政 いいえ/金融なし/健康なし。ストア設定 フード、ドリンク
 - 画面写真の並びは自動(play_shot の順に並んでいない可能性)。公開前に確認
 - 1.0.1 (vc2): RevenueCat Android キー入り。AAB: C:\Users\yuichi1\Downloads\タベドキ_2026-10-03\app\releases\tabedoki-1.0.1-vc2-release.aab (6.09 MB, 6,386,165 バイト)
+
+## 1.1.0 (versionCode 3) 見た目の作り直し(2026-10-10)
+持ち主が ChatGPT に作らせた UI 参考画像(Downloads\tabedoki_ref_2〜8_941x1672.png)に合わせて作り直した。機能・課金(完全版 tabedoki_full ¥500 買い切り・entitlement full・中身)は 1.0 のまま。iOS は出し直さない(持ち主の決定。ASC は触っていない)。
+
+- 見た目: 緑基調・白いカード。下のタブを5つ(ホーム・買い物・統計・共有・その他)。見本のカレンダーは無い機能なので出さない
+- 食材の絵・人物・小物は見本から切り出した(`python scripts/cut_ref_images.py` → public/img/)。見本に絵の無い食材は分類ごとの簡単な絵(新しく描いた)。線のアイコンは見本の形を SVG で描き直した(切り出すと20px前後でぼやけるため)
+- 画面: ホーム(ワンタップ・置き場所・期限が近いもの・左にずらして使い切った/捨てた)/食材を追加(よく使う食材・まとめて入れる・前回と同じの3つ)/日付を設定/使い切った・捨てた/買い物メモ(食材から・手入力で絞る・おつかれさまの欄)/ムダ管理(月別・食材別・棒グラフ)/冷蔵庫を共有(取り込む前に増える・消える品を見せてから合わせる)/その他(設定)/テーマ設定/完全版にアップグレード
+- テーマの id を変えた: kitchen→fresh(フレッシュ)・sakura→cream(クリーム)・night→dark(ダーク)・mint→blue(キッチンブルー)。古い保存データ・バックアップは `normalizeTheme` で読み替える(テストあり)
+- 見本と違えた所と理由: docs/compare_redesign_2〜8.png の下の段、一覧は docs/compare_redesign_all.png
+- アイコン: store/icon_source_1024.png(持ち主の新アイコン)→ `python scripts/make_native_assets.py` で store/icon_1024.png(縁の焼き込み影を白で平らにした不透明 1024)・Android 適応アイコン(背景 #FCFDFC 一色、前景に絵を 54% で)・丸・起動画面・iOS AppIcon・public/icon.png。切られ方の確認は docs/icon_check.png(丸・スクワークル・角丸・しずく・66dp 安全域)
+- 1.0 のアイコン・Play 素材・ネイティブのアイコンは store/_old_2026-10-10/ に退避
+- 確かめたこと: 単体テスト 37件 通過(`npx vitest run`)/ `npm run build` 通過 / E2E `python scripts/e2e.py` 125項目 全部 OK・console error 0(375・430 幅の全画面の写真は scripts/e2e_out/w375・w430、横のはみ出しも測る)。手数: ワンタップ1・ほかの食材1品3・前回と同じ3
+- Play 素材: `python scripts/make_store.py` → store/play/icon_512.png・feature_1024x500.png・play_shot_1〜6.png(1080x1920)。値段・「無料」は写していない(完全版にした状態で撮り、完全版の画面は撮らない)
+- 署名済み AAB: releases\tabedoki-1.1.0-vc3-release.aab(8,832,870 バイト)/ 確認用 APK: releases\tabedoki-1.1.0-vc3-release.apk。鍵は既存の tabedoki-upload(作り直していない)。証明書 SHA-256 は 1.0.1 と同じ 0E:4A:29:D1:AD:39:E8:17:AA:86:4D:BA:94:29:7E:93:0E:1B:26:27:11:E0:FD:CE:0D:98:CA:6E:29:62:FC:AE。jarsigner verified・apksigner verify 通過・aapt で jp.tabedoki.app / versionCode 3 / versionName 1.1.0 / targetSdk 36
+- build-android.ps1 の出力名は build.gradle の versionName・versionCode から付けるようにした
+- 残り: Play Console へのアップロードと画面写真の差し替え(このセッションではしていない)。実機での見た目の確認

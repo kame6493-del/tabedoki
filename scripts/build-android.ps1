@@ -47,13 +47,18 @@ try {
   $err = Join-Path $env:TEMP 'tabedoki_release_err.txt'
   $p = Start-Process -FilePath "$proj\gradlew.bat" -ArgumentList ':app:assembleRelease', ':app:bundleRelease', '--no-daemon', '-q' -WorkingDirectory $proj -NoNewWindow -Wait -PassThru -RedirectStandardError $err
   if ($p.ExitCode -ne 0) { Get-Content $err -Tail 30; throw "Gradle が失敗しました (exit $($p.ExitCode))" }
+  # 出力名は build.gradle の versionName と versionCode から付ける
+  $gradle = Get-Content "$repo\android\app\build.gradle" -Raw
+  $vc = [regex]::Match($gradle, 'versionCode\s+(\d+)').Groups[1].Value
+  $vn = [regex]::Match($gradle, 'versionName\s+"([^"]+)"').Groups[1].Value
+  $name = "tabedoki-$vn-vc$vc-release"
   $out = Join-Path $repo 'releases'
   New-Item -ItemType Directory -Force $out | Out-Null
-  Copy-Item "$proj\app\build\outputs\bundle\release\app-release.aab" "$out\tabedoki-1.0.1-vc2-release.aab" -Force
-  Copy-Item "$proj\app\build\outputs\apk\release\app-release.apk" "$out\tabedoki-1.0.1-vc2-release.apk" -Force
+  Copy-Item "$proj\app\build\outputs\bundle\release\app-release.aab" "$out\$name.aab" -Force
+  Copy-Item "$proj\app\build\outputs\apk\release\app-release.apk" "$out\$name.apk" -Force
   # 署名の確認(bundletool は無いので jarsigner)
   $ErrorActionPreference = 'Continue'
-  $v = & "$env:JAVA_HOME\bin\jarsigner.exe" '-J-Duser.language=en' -verify "$out\tabedoki-1.0.1-vc2-release.aab" 2>&1 | Out-String
+  $v = & "$env:JAVA_HOME\bin\jarsigner.exe" '-J-Duser.language=en' -verify "$out\$name.aab" 2>&1 | Out-String
   $ErrorActionPreference = 'Stop'
   if ($v -notmatch 'jar verified') { throw "AAB の署名を確かめられませんでした: $($v.Substring(0, [Math]::Min(400, $v.Length)))" }
   Write-Output "署名OK(jar verified)。出力: $out"

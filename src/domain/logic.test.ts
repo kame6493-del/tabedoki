@@ -5,7 +5,7 @@ import { builtinPresets } from './foods';
 import {
   addCustomPreset, addShop, addToTray, boughtToTray, commitTray, counts, daysLeft, emptyData, finish, itemsCsv,
   lastBatch, logCsv, makeShareFile, mergeShare, monthStats, normalize, planNotices, rankedPresets, removeItem,
-  sortByExpiry, toggleShop, topWasted, undoLog, urgency, makeBackup, restoreBackup, type Draft,
+  sortByExpiry, toggleShop, topWasted, undoLog, urgency, makeBackup, restoreBackup, normalizeTheme, lastBatchDate, type Draft,
 } from './logic';
 import type { AppData } from './types';
 
@@ -292,5 +292,36 @@ describe('バックアップ', () => {
     const back = restoreBackup(JSON.parse(JSON.stringify(makeBackup(d))));
     expect(back).toEqual(normalize(d));
     expect(() => restoreBackup(makeShareFile(d))).toThrow('タベドキのバックアップではありません');
+  });
+});
+
+describe('1.1.0 の見た目の作り直しで変えた所', () => {
+  it('古い保存データのテーマ id を新しい id に読み替える', () => {
+    const old = (theme: string) => normalize({ ...emptyData(), settings: { ...emptyData().settings, theme } }).settings.theme;
+    expect(old('kitchen')).toBe('fresh');
+    expect(old('night')).toBe('dark');
+    expect(old('sakura')).toBe('cream');
+    expect(old('mint')).toBe('blue');
+    expect(old('blue')).toBe('blue');
+    expect(old('なにか')).toBe('fresh');
+    expect(normalizeTheme(undefined)).toBe('fresh');
+    expect(emptyData().settings.theme).toBe('fresh');
+  });
+
+  it('バックアップから戻しても古いテーマは読み替わる', () => {
+    const d = emptyData();
+    const b = makeBackup({ ...d, settings: { ...d.settings, theme: 'night' } });
+    expect(restoreBackup(JSON.parse(JSON.stringify(b))).settings.theme).toBe('dark');
+  });
+
+  it('前回と同じ: 前回の登録の日を返す(無ければ null)', () => {
+    expect(lastBatchDate(emptyData())).toBeNull();
+    const d = withItems(['牛乳', '卵']);
+    expect(lastBatchDate(d)).toBe(T);
+    // 使い切って冷蔵庫から出しても、前回の日は残る
+    const gone = d.items.reduce((x, i) => finish(x, i.id, 'used', T), d);
+    expect(gone.items.length).toBe(0);
+    expect(lastBatchDate(gone)).toBe(T);
+    expect(lastBatch(gone, T).map((x) => x.name).sort()).toEqual(['卵', '牛乳'].sort());
   });
 });

@@ -14,6 +14,8 @@ export const BILLING = {
 
 export const APP = {
   name: 'タベドキ',
+  /** 画面に出す版(android/app/build.gradle の versionName と同じにする) */
+  version: '1.1.0',
   /** 無料で同時に入れておける品の数 */
   freeItemLimit: 30,
   /** 無料で使える通知の設定(前日の朝8時) */

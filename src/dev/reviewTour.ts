@@ -65,7 +65,7 @@ export async function runReviewTour() {
   if (await tap('.toast button, .toast a', '日付を直す', 1800)) await tap('.qd', '明日', 1800);
   await closeToast();
   // まとめて入れる: 卵×2・豆腐・もやし・にんじん
-  if (await tap('.fab', '', 1800)) {
+  if (await tap('.home-add', '', 1800)) {
     for (const n of ['卵', '卵', '豆腐', 'もやし', 'にんじん']) await tap('.tile', n, 700, 2000);
     await sleep(1200);
     await tap('.tray-bar .btn.primary', '', 2500);
@@ -78,13 +78,13 @@ export async function runReviewTour() {
     await tap('.toast button, .toast a', '買い物メモへ', 1500);
   }
   await closeToast();
-  // 記録(もったいない額・使い切り率)
-  await tap('.tab', '記録', 2500);
+  // ムダ管理(ムダ金額・使い切り率)
+  await tap('.tab', '統計', 2500);
   await scrollSlow(document.body.scrollHeight, 2000); await sleep(1200); await scrollSlow(0, 1000);
   // 買い物メモ
   await tap('.tab', '買い物', 2800);
   // 設定 → 完全版の購入画面
-  await tap('.tab', '設定', 2000);
+  await tap('.tab', 'その他', 2000);
   await scrollSlow(500, 1600); await sleep(1000); await scrollSlow(0, 1000);
   await tap('.pro-card', '', 3500);
   await scrollSlow(document.body.scrollHeight, 2500);

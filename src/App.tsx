@@ -12,11 +12,13 @@ import { Home } from './ui/Home';
 import { LogPage } from './ui/LogPage';
 import { Paywall } from './ui/Paywall';
 import { PresetsPage } from './ui/PresetsPage';
-import { SettingsPage } from './ui/SettingsPage';
+import { CustomPage, SettingsPage } from './ui/SettingsPage';
+import { SharePage } from './ui/SharePage';
 import { ShopPage } from './ui/ShopPage';
+import { Icon, type IconName } from './ui/icons';
 import { Toast, type ToastMsg } from './ui/parts';
 
-export type Page = 'home' | 'add' | 'shop' | 'log' | 'settings' | 'paywall' | 'presets';
+export type Page = 'home' | 'add' | 'shop' | 'log' | 'share' | 'settings' | 'paywall' | 'presets' | 'custom';
 
 export interface Ctx {
   data: AppData;
@@ -33,7 +35,7 @@ export interface Ctx {
 /** 無料で使える範囲に丸める(買ったあとに外すと元の設定に戻る) */
 export function effectiveSettings(s: Settings, premium: boolean): Settings {
   if (premium) return s;
-  return { ...s, notifyDaysBefore: [...APP.freeNotifyDays], notifyTime: APP.freeNotifyTime, theme: 'kitchen' };
+  return { ...s, notifyDaysBefore: [...APP.freeNotifyDays], notifyTime: APP.freeNotifyTime, theme: 'fresh' };
 }
 
 export default function App() {
@@ -77,22 +79,22 @@ export default function App() {
   const toast = useCallback((t: ToastMsg) => setToastMsg({ ...t, key: Date.now() }), []);
   const go = useCallback((p: Page) => {
     setPage((cur) => {
-      if (p === 'paywall' || p === 'presets') setBack(cur);
+      if ((p === 'paywall' || p === 'presets' || p === 'custom') && cur !== p) setBack(cur);
       return p;
     });
     window.scrollTo(0, 0);
   }, []);
 
   useEffect(() => {
-    const theme = settings?.theme ?? 'kitchen';
+    const theme = settings?.theme ?? 'fresh';
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.setProperty('--fs', String(settings?.fontScale ?? 1));
     const meta = document.querySelector('meta[name=theme-color]');
-    if (meta) meta.setAttribute('content', getComputedStyle(document.body).getPropertyValue('--bg').trim() || '#f6f2ea');
+    if (meta) meta.setAttribute('content', getComputedStyle(document.body).getPropertyValue('--bg').trim() || '#ffffff');
   }, [settings?.theme, settings?.fontScale]);
 
   if (error) return <div className="fatal">記録を読み込めませんでした。アプリを開き直してください。<br />({error})</div>;
-  if (!data || !settings) return <div className="splash">タベドキ</div>;
+  if (!data || !settings) return <div className="splash"><img src="./icon.png" alt="タベドキ" /></div>;
 
   const commit = (t: Draft[]) => {
     const r = commitTray(data, t, premium);
@@ -111,8 +113,10 @@ export default function App() {
       {page === 'add' && <AddPage ctx={ctx} tray={tray} setTray={setTray} />}
       {page === 'shop' && <ShopPage ctx={ctx} openAdd={(t) => { setTray(t); go('add'); }} />}
       {page === 'log' && <LogPage ctx={ctx} />}
+      {page === 'share' && <SharePage ctx={ctx} />}
+      {page === 'custom' && <CustomPage ctx={ctx} onClose={() => go(back === 'custom' ? 'settings' : back)} />}
       {page === 'settings' && <SettingsPage ctx={ctx} billing={billing} />}
-      {page === 'presets' && <PresetsPage ctx={ctx} onClose={() => go(back)} />}
+      {page === 'presets' && <PresetsPage ctx={ctx} onClose={() => go(back === 'presets' ? 'settings' : back)} />}
       {page === 'paywall' && (
         <Paywall
           billing={billing} setBilling={setBilling}
@@ -120,24 +124,26 @@ export default function App() {
           onBought={() => { setBilling((b) => (b.status === 'ready' ? { ...b, premium: true } : { status: 'ready', premium: true, price: null })); toast({ text: '完全版になりました。ありがとうございます' }); go(back === 'paywall' ? 'home' : back); }}
         />
       )}
-      {(page === 'home' || page === 'shop' || page === 'log' || page === 'settings') && <TabBar page={page} go={go} shopCount={data.shop.filter((s) => !s.done).length} />}
+      {(page === 'home' || page === 'shop' || page === 'log' || page === 'share' || page === 'settings') && <TabBar page={page} go={go} shopCount={data.shop.filter((s) => !s.done).length} />}
       <Toast msg={toastMsg} onDone={() => setToastMsg(null)} />
     </div>
   );
 }
 
 function TabBar(p: { page: Page; go: (p: Page) => void; shopCount: number }) {
-  const tabs: { id: Page; label: string; icon: string }[] = [
-    { id: 'home', label: '冷蔵庫', icon: 'M5 3h14v18H5zM5 10h14M8 6v2M8 13v3' },
-    { id: 'shop', label: '買い物', icon: 'M4 6h16l-2 9H6zM6 15l-1 4h14M9 21a1 1 0 1 0 0-.01M17 21a1 1 0 1 0 0-.01' },
-    { id: 'log', label: '記録', icon: 'M4 20V10M10 20V4M16 20v-7M22 20H2' },
-    { id: 'settings', label: '設定', icon: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM4 12h2M18 12h2M12 4v2M12 18v2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4M6.3 17.7l1.4-1.4M16.3 7.7l1.4-1.4' },
+  // 見本の下のタブ(ホーム・カレンダー・統計・共有・その他)。カレンダーの機能は無いので、そこは買い物メモにした
+  const tabs: { id: Page; label: string; icon: IconName }[] = [
+    { id: 'home', label: 'ホーム', icon: 'home' },
+    { id: 'shop', label: '買い物', icon: 'cart' },
+    { id: 'log', label: '統計', icon: 'chart' },
+    { id: 'share', label: '共有', icon: 'share' },
+    { id: 'settings', label: 'その他', icon: 'dots' },
   ];
   return (
     <nav className="tabbar">
       {tabs.map((t) => (
         <button key={t.id} className={'tab' + (p.page === t.id ? ' on' : '')} onClick={() => p.go(t.id)} aria-label={t.label}>
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={t.icon} /></svg>
+          <Icon name={t.icon} size={24} stroke={p.page === t.id ? 2.3 : 1.8} />
           <span>{t.label}</span>
           {t.id === 'shop' && p.shopCount > 0 && <i className="badge">{p.shopCount}</i>}
         </button>

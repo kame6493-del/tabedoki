@@ -1,5 +1,5 @@
 import { APP } from './config';
-import { addDays, diffDays, isValidYmd, today as todayOf } from './dates';
+import { addDays, diffDays, isValidYmd, today as todayOf, toYmd } from './dates';
 import { BUILTIN_CATS, BUILTIN_PLACES, builtinPresets } from './foods';
 import type { AppData, Item, KigenKind, LogEntry, Outcome, Preset, Settings, ShopEntry, Ymd } from './types';
 
@@ -13,7 +13,7 @@ export const DEFAULT_SETTINGS: Settings = {
   notify: true,
   notifyTime: APP.freeNotifyTime,
   notifyDaysBefore: [...APP.freeNotifyDays],
-  theme: 'kitchen',
+  theme: 'fresh',
   fontScale: 1,
   defaultPlace: 'fridge',
   deviceName: '',
@@ -31,6 +31,15 @@ export function emptyData(): AppData {
     settings: { ...DEFAULT_SETTINGS },
     deleted: [],
   };
+}
+
+/** テーマの id(1.1.0 で見本に合わせて名前と色を変えた)。古い保存データの id はここで読み替える */
+export const THEME_IDS = ['fresh', 'cream', 'dark', 'blue'] as const;
+const OLD_THEME: Record<string, string> = { kitchen: 'fresh', sakura: 'cream', night: 'dark', mint: 'blue' };
+export function normalizeTheme(t: unknown): string {
+  const s = typeof t === 'string' ? t : '';
+  if ((THEME_IDS as readonly string[]).includes(s)) return s;
+  return OLD_THEME[s] ?? 'fresh';
 }
 
 /** 読み込んだ物を今の形にそろえる(壊れた値は捨てる。足りない組み込みは足す) */
@@ -59,7 +68,7 @@ export function normalize(raw: unknown): AppData {
     places,
     log: arr<LogEntry>(r.log).filter((l) => l && l.id && (l.outcome === 'used' || l.outcome === 'wasted')),
     shop: arr<ShopEntry>(r.shop).filter((s) => s && s.id && s.name),
-    settings: { ...DEFAULT_SETTINGS, ...(r.settings ?? {}) },
+    settings: (() => { const st = { ...DEFAULT_SETTINGS, ...(r.settings ?? {}) }; return { ...st, theme: normalizeTheme(st.theme) }; })(),
     deleted: arr<string>(r.deleted).filter((s) => typeof s === 'string').slice(-2000),
     lastBatchArchive: arr<Item>(r.lastBatchArchive).filter((i) => i && i.id && i.batch && isValidYmd(i.expiry)),
   };
@@ -169,6 +178,15 @@ export function lastBatch(data: AppData, t: Ymd): Draft[] {
     const span = Math.max(0, diffDays(i.addedAt.slice(0, 10), i.expiry));
     return { key: newId('d'), presetId: i.presetId, name: i.name, cat: i.cat, place: i.place, kind: i.kind, expiry: addDays(t, span), qty: i.qty, price: i.price };
   });
+}
+
+/** 「前回と同じ」の元になった登録の日(端末の暦)。無ければ null */
+export function lastBatchDate(data: AppData): Ymd | null {
+  const all = [...data.items, ...(data.lastBatchArchive ?? [])];
+  if (!all.length) return null;
+  const latest = all.reduce((a, b) => (a.addedAt > b.addedAt ? a : b));
+  const d = new Date(latest.addedAt);
+  return Number.isNaN(d.getTime()) ? null : toYmd(d);
 }
 
 /** 新しい食材を「よく買う」に足す(手で名前を打った品) */
